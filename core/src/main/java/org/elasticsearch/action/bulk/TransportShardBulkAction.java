@@ -392,6 +392,7 @@ public class TransportShardBulkAction extends TransportReplicationAction<BulkSha
 
     private UpdateResult shardUpdateOperation(ClusterState clusterState, BulkShardRequest bulkShardRequest, UpdateRequest updateRequest, IndexShard indexShard) {
         UpdateHelper.Result translate = updateHelper.prepare(updateRequest, indexShard);
+        logger.warn("OPERATION Shard [{}] ", translate.operation());
         switch (translate.operation()) {
             case UPSERT:
             case INDEX:

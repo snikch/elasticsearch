@@ -218,6 +218,7 @@ public class UpdateHelper extends AbstractComponent {
         }
 
         if (operation == null || "index".equals(operation)) {
+            logger.warn("INDEX OPERATION");
             final IndexRequest indexRequest = Requests.indexRequest(request.index()).type(request.type()).id(request.id()).routing(routing).parent(parent)
                     .source(updatedSourceAsMap, updateSourceContentType)
                     .version(updateVersion).versionType(request.versionType())
@@ -226,17 +227,19 @@ public class UpdateHelper extends AbstractComponent {
                     .refresh(request.refresh());
             return new Result(indexRequest, Operation.INDEX, updatedSourceAsMap, updateSourceContentType);
         } else if ("delete".equals(operation)) {
+            logger.warn("DELETE OPERATION");
             DeleteRequest deleteRequest = Requests.deleteRequest(request.index()).type(request.type()).id(request.id()).routing(routing).parent(parent)
                     .version(updateVersion).versionType(request.versionType())
                     .consistencyLevel(request.consistencyLevel());
             return new Result(deleteRequest, Operation.DELETE, updatedSourceAsMap, updateSourceContentType);
         } else if ("none".equals(operation)) {
-            UpdateResponse update = new UpdateResponse(getResult.getIndex(), getResult.getType(), getResult.getId(), getResult.getVersion(), false);
+            logger.warn("NONE OPERATION");
+            UpdateResponse update = new UpdateResponse(getResult.getIndex(), getResult.getType(), getResult.getId(), getResult.getVersion(), false, true);
             update.setGetResult(extractGetResult(request, request.index(), getResult.getVersion(), updatedSourceAsMap, updateSourceContentType, getResult.internalSourceRef()));
             return new Result(update, Operation.NONE, updatedSourceAsMap, updateSourceContentType);
         } else {
             logger.warn("Used update operation [{}] for script [{}], doing nothing...", operation, request.script.getScript());
-            UpdateResponse update = new UpdateResponse(getResult.getIndex(), getResult.getType(), getResult.getId(), getResult.getVersion(), false);
+            UpdateResponse update = new UpdateResponse(getResult.getIndex(), getResult.getType(), getResult.getId(), getResult.getVersion(), false, true);
             return new Result(update, Operation.NONE, updatedSourceAsMap, updateSourceContentType);
         }
     }

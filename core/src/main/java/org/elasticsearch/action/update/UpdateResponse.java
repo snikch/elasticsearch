@@ -30,12 +30,19 @@ import java.io.IOException;
  */
 public class UpdateResponse extends ActionWriteResponse {
 
+    public static final String OPERATION_CREATE = "create";
+    public static final String OPERATION_DELETE = "delete";
+    public static final String OPERATION_INDEX = "index";
+    public static final String OPERATION_NOOP = "none";
+
     private String index;
     private String id;
     private String type;
     private long version;
     private boolean created;
+    private boolean deleted;
     private GetResult getResult;
+    private boolean noop;
 
     public UpdateResponse() {
     }
@@ -48,6 +55,10 @@ public class UpdateResponse extends ActionWriteResponse {
         this(new ShardInfo(0, 0), index, type, id, version, created);
     }
 
+    public UpdateResponse(String index, String type, String id, long version, boolean created, boolean noop) {
+        this(new ShardInfo(0, 0), index, type, id, version, created, noop);
+    }
+
     public UpdateResponse(ShardInfo shardInfo, String index, String type, String id, long version, boolean created) {
         setShardInfo(shardInfo);
         this.index = index;
@@ -55,6 +66,11 @@ public class UpdateResponse extends ActionWriteResponse {
         this.type = type;
         this.version = version;
         this.created = created;
+    }
+
+    public UpdateResponse(ShardInfo shardInfo, String index, String type, String id, long version, boolean created, boolean noop) {
+        this(shardInfo, index, type, id, version, created);
+        this.noop = noop;
     }
 
     /**
@@ -93,6 +109,30 @@ public class UpdateResponse extends ActionWriteResponse {
         return this.getResult;
     }
 
+    public boolean isNoop() {
+        return this.noop;
+    }
+
+    public void setDeleted(boolean deleted) {
+        this.deleted = deleted;
+    }
+
+    public boolean isDeleted() {
+        return this.deleted;
+    }
+
+    public String getOperation() {
+        if (this.isCreated()) {
+            return OPERATION_CREATE;
+        } else if (this.isNoop()) {
+            return OPERATION_NOOP;
+        } else if (this.isDeleted()) {
+            return OPERATION_DELETE;
+        } else {
+            return OPERATION_INDEX;
+        }
+    }
+
     /**
      * Returns true if document was created due to an UPSERT operation
      */
@@ -109,6 +149,7 @@ public class UpdateResponse extends ActionWriteResponse {
         id = in.readString();
         version = in.readLong();
         created = in.readBoolean();
+        noop = in.readBoolean();
         if (in.readBoolean()) {
             getResult = GetResult.readGetResult(in);
         }
@@ -122,6 +163,7 @@ public class UpdateResponse extends ActionWriteResponse {
         out.writeString(id);
         out.writeLong(version);
         out.writeBoolean(created);
+        out.writeBoolean(noop);
         if (getResult == null) {
             out.writeBoolean(false);
         } else {

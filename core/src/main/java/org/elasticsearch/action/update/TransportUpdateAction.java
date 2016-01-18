@@ -167,6 +167,8 @@ public class TransportUpdateAction extends TransportInstanceSingleOperationActio
         IndexService indexService = indicesService.indexServiceSafe(request.concreteIndex());
         IndexShard indexShard = indexService.getShard(request.shardId());
         final UpdateHelper.Result result = updateHelper.prepare(request, indexShard);
+        logger.warn("OPERATION [{}] ", result.operation());
+
         switch (result.operation()) {
             case UPSERT:
                 IndexRequest upsertRequest = new IndexRequest(result.action(), request);
@@ -241,6 +243,8 @@ public class TransportUpdateAction extends TransportInstanceSingleOperationActio
                     @Override
                     public void onResponse(DeleteResponse response) {
                         UpdateResponse update = new UpdateResponse(response.getShardInfo(), response.getIndex(), response.getType(), response.getId(), response.getVersion(), false);
+                        logger.warn("SETTING DELETED");
+                        update.setDeleted(true);
                         update.setGetResult(updateHelper.extractGetResult(request, request.concreteIndex(), response.getVersion(), result.updatedSourceAsMap(), result.updateSourceContentType(), null));
                         listener.onResponse(update);
                     }
